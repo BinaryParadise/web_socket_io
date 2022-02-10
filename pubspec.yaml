@@ -1,7 +1,8 @@
 name: web_socket_io
 description: A new Flutter package project.
 version: 0.0.1
-homepage:
+homepage: https://github.com/BinaryParadise/web_socket_io.git
+publish_to: 'https://pub.dev'
 
 environment:
   sdk: ">=2.12.0 <3.0.0"
