@@ -72,65 +72,91 @@ class _MyHomePageState extends State<MyHomePage> {
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('服务端: '),
-                IconButton(
-                    onPressed: () {
-                      if (_serverRunning) {
-                        _server.stop();
-                      } else {
-                        _server.play();
-                      }
-                      setState(() {
-                        _serverRunning = !_serverRunning;
-                      });
-                    },
-                    icon: Icon(
-                        _serverRunning ? Icons.stop : Icons.play_circle_fill))
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('客户端: '),
-                IconButton(
-                    onPressed: _serverRunning
-                        ? () {
-                            if (_clientRunning) {
-                              _client.stop();
-                            } else {
-                              _client.play();
-                            }
-                            setState(() {
-                              _clientRunning = !_clientRunning;
-                            });
-                          }
-                        : null,
-                    icon: Icon(
-                        _clientRunning ? Icons.stop : Icons.play_circle_fill))
-              ],
-            ),
-            TextButton(
-                onPressed: () {
-                  _client.send(true);
-                },
-                child: Text('发送文本消息')),
-            TextButton(
-                onPressed: () {
-                  _client.send(false);
-                },
-                child: Text('发送二进制消息'))
-          ],
-        ),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Expanded(child: _WorkPanel('服务端', ServerDemo())),
+          Expanded(child: _WorkPanel('客户端', ClientDemo())),
+        ],
+      ),
+      // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+}
+
+class _WorkPanel extends StatefulWidget {
+  String title;
+  SocketDemoChannel channel;
+  _WorkPanel(this.title, this.channel);
+  @override
+  State<_WorkPanel> createState() => _WorkPanelState();
+}
+
+class _WorkPanelState extends State<_WorkPanel> {
+  var _running = false;
+  ScrollController _controller = ScrollController();
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget current;
+    current = Row(
+      children: [
+        SizedBox(
+          width: 12,
+        ),
+        Text(widget.title),
+        IconButton(
+            onPressed: () {
+              if (_running) {
+                widget.channel.stop().then((value) {
+                  setState(() {
+                    _running = false;
+                  });
+                });
+              } else {
+                widget.channel.play().then((value) {
+                  setState(() {
+                    _running = true;
+                  });
+                });
+              }
+            },
+            icon: Icon(_running ? Icons.stop : Icons.play_circle_fill)),
+        TextButton(
+            onPressed: () {
+              widget.channel.send(true);
+            },
+            child: const Text(
+              '发送文本消息',
+              style: TextStyle(color: Colors.orange),
+            )),
+        TextButton(
+            onPressed: () {
+              widget.channel.send(false);
+            },
+            child: const Text('发送二进制消息'))
+      ],
+    );
+    Widget list = ValueListenableBuilder(
+        valueListenable: widget.channel.valueListenable(),
+        builder: (ctx, List<String> value, widget) {
+          Future.delayed(const Duration(microseconds: 200), () {
+            _controller.jumpTo(_controller.position.maxScrollExtent);
+          });
+          return ListView.builder(
+              shrinkWrap: true,
+              controller: _controller,
+              padding: const EdgeInsets.all(10),
+              itemBuilder: (ctx, row) => Text(value[row]),
+              itemCount: value.length);
+        });
+    current = Column(
+      children: [current, Expanded(child: list)],
+    );
+    return current;
   }
 }

@@ -3,45 +3,41 @@ import 'dart:io';
 import 'dart:convert' as convert;
 import 'dart:math';
 import 'dart:typed_data';
-import 'package:crypto/crypto.dart';
 
 import 'web_socket_frame.dart';
 import 'web_socket_provider.dart';
 
-class WebSocketClient implements WebSocketChannel {
+class WebSocketClient {
   String url;
   Map<String, String>? headers;
   WebSocketProvider provider;
-  Duration? pingInterval;
-  WebSocketClient(this.url,
-      {required this.provider, this.pingInterval, this.headers});
+  WebSocketClient(this.url, {required this.provider, this.headers});
 
-  bool _handshaked = false;
-  Socket? _socket;
+  late WebSocketChannel _channel;
 
   Future<bool> connect() async {
     var uri = Uri.parse(url);
-    await Socket.connect(uri.host, uri.port).then((value) {
-      _socket = value;
-
-      _socket?.listen((event) {
-        if (_handshaked) {
+    await Socket.connect(uri.host, uri.port).then((socket) {
+      _channel = WebSocketChannel(socket, mask: true);
+      socket.listen((event) {
+        if (_channel.handshaked) {
           var frame = WebSocketFrame.create(event);
           switch (frame.opcode) {
             case OpCode.text:
-              provider.onText(String.fromCharCodes(frame.payload), this);
+              provider.onText(String.fromCharCodes(frame.payload), _channel);
               break;
             case OpCode.binary:
-              provider.onMessage(frame.payload, this);
+              provider.onMessage(frame.payload, _channel);
               break;
             case OpCode.close:
-              provider.onClosed(CloseCodeExtension.parse(frame.payload.uint16));
+              provider.onClosed(
+                  CloseCodeExtension.parse(frame.payload.uint16), _channel);
               break;
             case OpCode.ping:
-              // TODO: Handle this case.
+              provider.onPing(frame.payload, _channel);
               break;
             case OpCode.pong:
-              // TODO: Handle this case.
+              provider.onPong(frame.payload, _channel);
               break;
             case OpCode.reserved:
               // TODO: Handle this case.
@@ -49,52 +45,43 @@ class WebSocketClient implements WebSocketChannel {
           }
         } else {
           var hds = String.fromCharCodes(event.toList()).split('\r\n');
-          _handshaked = true;
-          provider.onConnected(this);
-          if (pingInterval != null) {
-            Timer.periodic(pingInterval!, (timer) {});
-          }
+          _channel.handshaked = true;
+          provider.onConnected(_channel);
         }
       }, onError: (error) {
-        provider.onClosed(CloseCode.error);
+        provider.onClosed(CloseCode.error, _channel);
       });
 
-      _socket?.writeln('GET ${uri.path} HTTP/1.1');
-      _socket?.writeln('Host: ${uri.host}:${uri.port}');
-      _socket?.writeln('Upgrade: websocket');
-      _socket?.writeln('Connection: Upgrade');
-      _socket?.writeln('Sec-WebSocket-Key: ${secKey()}');
-      _socket?.writeln('Sec-WebSocket-Version: 13');
-      _socket?.writeln(
-          'Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits');
+      socket.write('GET ${uri.path} HTTP/1.1\r\n');
+      socket.write('Host: ${uri.host}:${uri.port}\r\n');
+      socket.write('Upgrade: websocket\r\n');
+      socket.write('Connection: Upgrade\r\n');
+      socket.write('Sec-WebSocket-Key: ${secKey()}\r\n');
+      socket.write('Sec-WebSocket-Version: 13\r\n');
+      socket.write(
+          'Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits\r\n');
       headers?.forEach((key, value) {
-        _socket?.writeln('$key: $value');
+        socket.write('$key: $value\r\n');
       });
-      _socket?.writeln();
+      socket.write('\r\n');
     }).catchError((error) => print(error));
     return true;
   }
 
-  void sendBinary(List<int> data) {}
-
-  void sendPing({List<int> data = const []}) {
-    var frame = WebSocketFrame(OpCode.ping, payload: Uint8List.fromList(data));
-    _socket?.add(frame.rawBytes());
+  void sendText(String text) {
+    _channel.send(OpCode.text, const convert.Utf8Encoder().convert(text));
   }
 
-  @override
-  void send(OpCode code, Uint8List data) {
-    var frame = WebSocketFrame(code, mask: true, payload: data);
-    var raw = frame.rawBytes();
-    _socket?.add(raw.toList());
+  void sendData(Uint8List data) {
+    _channel.send(OpCode.binary, data);
   }
 
-  @override
-  Future<bool> close({CloseCode code = CloseCode.normal}) {
-    var frame =
-        WebSocketFrame(OpCode.close, payload: 1006.bytes(bit: BitWidth.short));
-    _socket?.add(frame.rawBytes());
-    return Future.value(true);
+  void sendPing(Uint8List data) {
+    _channel.send(OpCode.ping, data);
+  }
+
+  Future<bool> close({CloseCode code = CloseCode.normal}) async {
+    return await _channel.close(code: code);
   }
 
   String secKey() {

@@ -48,7 +48,8 @@ class WebSocketFrame {
       index += 4;
     }
     if (mask) {
-      maskingKey = Uint8List.fromList(stream.getRange(index, index + 4).toList());
+      maskingKey =
+          Uint8List.fromList(stream.getRange(index, index + 4).toList());
       index += 4;
     }
 
@@ -162,7 +163,7 @@ extension IntExtension on int {
 
 extension Uint8ListExt on Uint8List {
   int get uint16 {
-    return ((this[0] & 0xFF) << 8) + (this[1] & 0xFF);
+    return length > 1 ? ((this[0] & 0xFF) << 8) + (this[1] & 0xFF) : 0;
   }
 
   String toHex() {
