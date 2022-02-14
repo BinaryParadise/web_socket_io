@@ -7,8 +7,6 @@ import 'dart:convert' as convert;
 import 'web_socket_frame.dart';
 import 'web_socket_io.dart';
 
-const String webSocketGUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
-
 /// TODO
 class WebSocketServer {
   WebSocketProvider? provider;
@@ -63,7 +61,7 @@ class WebSocketServer {
         .split(': ')
         .last;
     var acceptKey = convert.base64
-        .encode(sha1.convert((secretKey + webSocketGUID).codeUnits).bytes);
+        .encode(sha1.convert((secretKey + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').codeUnits).bytes);
     channel.socket.write('HTTP/1.1 101 Switching Protocols\r\n');
     channel.socket.write('Upgrade: websocket\r\n');
     channel.socket.write('Connection: Upgrade\r\n');
