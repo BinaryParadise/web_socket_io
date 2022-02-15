@@ -1,7 +1,7 @@
 name: web_socket_io
-description: 基于dart的webosocket简单实现.用于金丝雀的WebSocket的连接，目的是学习flutter开发。
-version: 0.0.2
-homepage: https://github.com/BinaryParadise/web_socket_io.git
+description: WebSocket implement based on dart。Used to canary client sdk.My purpose is to learn dart syntax and development process。
+version: 0.0.3
+homepage: https://github.com/BinaryParadise/web_socket_io
 
 environment:
   sdk: ">=2.12.0 <3.0.0"

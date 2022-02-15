@@ -1,5 +1,5 @@
 
-用Flutter实现的WebSocket轮子。
+基于dart简单实现WebSocket。
 
 ## WebSocket协议
 

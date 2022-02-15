@@ -42,7 +42,6 @@ class WebSocketClient {
             provider.onPong(frame.payload, _channel);
             break;
           case OpCode.reserved:
-            // TODO: Handle this case.
             break;
         }
       } else {
@@ -61,7 +60,7 @@ class WebSocketClient {
           _channel.handshaked = true;
           provider.onConnected(_channel);
         } else {
-          provider.onClosed(CloseCode.protocol_error, _channel);
+          provider.onClosed(CloseCode.protocolError, _channel);
         }
       }
     }, onError: (error) {

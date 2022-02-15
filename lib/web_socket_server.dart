@@ -7,7 +7,7 @@ import 'dart:convert' as convert;
 import 'web_socket_frame.dart';
 import 'web_socket_io.dart';
 
-/// TODO
+/// 服务端对象
 class WebSocketServer {
   WebSocketProvider? provider;
   late ServerSocket _mainSocket;
@@ -27,7 +27,7 @@ class WebSocketServer {
         switch (frame.opcode) {
           case OpCode.text:
             provider?.onText(
-                convert.Utf8Decoder().convert(frame.payload), channel);
+                const convert.Utf8Decoder().convert(frame.payload), channel);
             break;
           case OpCode.binary:
             provider?.onMessage(frame.payload, channel);
@@ -45,7 +45,6 @@ class WebSocketServer {
             provider?.onPong(frame.payload, channel);
             break;
           case OpCode.reserved:
-            // TODO: Handle this case.
             break;
         }
       } else {
@@ -60,8 +59,9 @@ class WebSocketServer {
         .firstWhere((element) => element.contains('Sec-WebSocket-Key: '))
         .split(': ')
         .last;
-    var acceptKey = convert.base64
-        .encode(sha1.convert((secretKey + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').codeUnits).bytes);
+    var acceptKey = convert.base64.encode(sha1
+        .convert((secretKey + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').codeUnits)
+        .bytes);
     channel.socket.write('HTTP/1.1 101 Switching Protocols\r\n');
     channel.socket.write('Upgrade: websocket\r\n');
     channel.socket.write('Connection: Upgrade\r\n');
@@ -71,7 +71,6 @@ class WebSocketServer {
     provider?.onConnected(channel);
   }
 
-  @override
   Future<bool> close({CloseCode code = CloseCode.normal}) async {
     await _mainSocket.close();
     return Future.value(true);
