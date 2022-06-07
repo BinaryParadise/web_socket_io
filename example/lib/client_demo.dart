@@ -29,9 +29,9 @@ class ClientDemo implements WebSocketProvider, SocketDemoChannel {
   @override
   void send(bool text) {
     if (text) {
-      _client.sendText('文本测试消息');
+      _client.sendText(TextData);
     } else {
-      _client.sendData(const Utf8Encoder().convert('二进制测试消息'));
+      _client.sendData(const Utf8Encoder().convert(TextData));
     }
   }
 
@@ -47,8 +47,7 @@ class ClientDemo implements WebSocketProvider, SocketDemoChannel {
     print('client.onConnected');
 
     _pingTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
-      _client.sendPing(
-          const Utf8Encoder().convert(DateTime.now().toString()));
+      _client.sendPing(const Utf8Encoder().convert(DateTime.now().toString()));
     });
   }
 

@@ -14,6 +14,7 @@ class WebSocketServer {
 
   void bind(String address, int port) async {
     _mainSocket = await ServerSocket.bind(address, port);
+    print('bind on $address:$port');
     _mainSocket.listen((newSocket) {
       _schedule(newSocket);
     });
@@ -62,11 +63,13 @@ class WebSocketServer {
     var acceptKey = convert.base64.encode(sha1
         .convert((secretKey + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').codeUnits)
         .bytes);
-    channel.socket.write('HTTP/1.1 101 Switching Protocols\r\n');
-    channel.socket.write('Upgrade: websocket\r\n');
-    channel.socket.write('Connection: Upgrade\r\n');
-    channel.socket.write('Sec-WebSocket-Accept: $acceptKey\r\n');
-    channel.socket.write('\r\n');
+    var head = '''HTTP/1.1 101 Switching Protocols
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Accept: $acceptKey
+
+''';
+    channel.socket.write(head);
     channel.handshaked = true;
     provider?.onConnected(channel);
   }
