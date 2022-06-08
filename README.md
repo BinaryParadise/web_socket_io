@@ -27,6 +27,12 @@ Connection: Upgrade
 Sec-WebSocket-Accept: WhwAE9ive8GXOhTDu6RlEunn4C0=
 ```
 
+## 如何发布
+
+```bash
+dart pub publish --server=https://pub.dartlang.org
+```
+
 ## 如何使用
 
 ### 服务端

@@ -1,6 +1,6 @@
 name: web_socket_io
 description: WebSocket implement based on dart。Used to canary client sdk.My purpose is to learn dart syntax and development process。
-version: 0.0.3
+version: 0.0.4
 homepage: https://github.com/BinaryParadise/web_socket_io
 
 environment:
