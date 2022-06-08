@@ -63,13 +63,14 @@ class WebSocketServer {
     var acceptKey = convert.base64.encode(sha1
         .convert((secretKey + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').codeUnits)
         .bytes);
-    var head = '''HTTP/1.1 101 Switching Protocols
-Upgrade: websocket
-Connection: Upgrade
-Sec-WebSocket-Accept: $acceptKey
+    List<String> head = [];
+    head.add('HTTP/1.1 101 Switching Protocols\r\n');
+    head.add('Upgrade: websocket\r\n');
+    head.add('Connection: Upgrade\r\n');
+    head.add('Sec-WebSocket-Accept: $acceptKey\r\n');
+    head.add('\r\n');
 
-''';
-    channel.socket.write(head);
+    channel.socket.write(head.join());
     channel.handshaked = true;
     provider?.onConnected(channel);
   }
