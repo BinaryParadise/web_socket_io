@@ -48,7 +48,7 @@ class WebSocketClient {
         var secAcceptKey = String.fromCharCodes(event.toList())
             .split('\r\n')
             .firstWhere(
-                (element) => element.startsWith('Sec-Websocket-Accept: '),
+                (element) => element.startsWith('Sec-WebSocket-Accept: '),
                 orElse: () => '')
             .split(': ')
             .last;
@@ -70,18 +70,21 @@ class WebSocketClient {
       provider.onClosed(CloseCode.normal, _channel);
     });
 
-    socket.write('GET ${uri.path} HTTP/1.1\r\n');
-    socket.write('Host: ${uri.host}:${uri.port}\r\n');
-    socket.write('Upgrade: websocket\r\n');
-    socket.write('Connection: Upgrade\r\n');
-    socket.write('Sec-WebSocket-Key: $secretKey\r\n');
-    socket.write('Sec-WebSocket-Version: 13\r\n');
-    socket.write(
-        'Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits\r\n');
+    List<String> h = [];
+    h.add('GET ${url} HTTP/1.1');
+    h.add('Host: ${uri.host}:${uri.port}');
+    h.add('Upgrade: websocket');
+    h.add('Connection: Upgrade');
+    h.add('Sec-WebSocket-Key: $secretKey');
+    h.add('Sec-WebSocket-Version: 13');
+    h.add(
+        'Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits');
+
     headers?.forEach((key, value) {
-      socket.write('$key: $value\r\n');
+      h.add('$key: $value');
     });
-    socket.write('\r\n');
+    var head = h.join("\r\n") + "\r\n";
+    socket.write(head);
     return true;
   }
 

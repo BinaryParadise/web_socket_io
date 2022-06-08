@@ -80,7 +80,41 @@ class WebSocketFrame {
     if (length < 126) {
       bytes.addByte(payload.length.bytes(bit: BitWidth.byte).first |
           (mask ? maskMask : 0x00));
-    } else if (length == 126) {
+    } else if (length <= 65535) {
+      bytes.addByte(0x7E | (mask ? maskMask : 0x00));
+      bytes.add(payload.length.bytes(bit: BitWidth.short).toList());
+    } else {
+      bytes.addByte(0x7F | (mask ? maskMask : 0x00));
+      bytes.add(payload.length.bytes(bit: BitWidth.long).toList());
+    }
+
+    var data = payload;
+    if (mask) {
+      maskingKey = Random().nextInt(4294967295).bytes();
+      bytes.add(maskingKey!.toList());
+
+      for (var i = 0; i < data.length; i++) {
+        data[i] = data[i] ^ maskingKey![i % 4];
+      }
+    }
+
+    bytes.add(data.toList());
+    return bytes.toBytes();
+  }
+
+  Uint8List rawTextBytes(List<int> payload) {
+    var bytes = BytesBuilder();
+    var head = 0;
+    if (fin) {
+      head |= 0x80;
+    }
+    head |= opcode.value & opCodeMask;
+    bytes.addByte(head);
+    length = payload.length;
+    if (length < 126) {
+      bytes.addByte(payload.length.bytes(bit: BitWidth.byte).first |
+          (mask ? maskMask : 0x00));
+    } else if (length <= 65535) {
       bytes.addByte(0x7E | (mask ? maskMask : 0x00));
       bytes.add(payload.length.bytes(bit: BitWidth.short).toList());
     } else {

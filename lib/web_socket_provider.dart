@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -14,6 +15,12 @@ class WebSocketChannel {
   void send(OpCode code, Uint8List data) {
     var frame = WebSocketFrame(code, mask: mask, payload: data);
     var raw = frame.rawBytes();
+    socket.add(raw.toList());
+  }
+
+  void sendText(String text) {
+    var frame = WebSocketFrame(OpCode.text, mask: mask, payload: Uint8List(0));
+    var raw = frame.rawTextBytes(text.codeUnits);
     socket.add(raw.toList());
   }
 
